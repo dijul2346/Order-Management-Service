@@ -28,5 +28,8 @@ public class Order {
     private Double taxAmount;
     private Double totalAmount;
     private OrderStatus status;
+    @Indexed(type = IndexType.STRING, name="created_at_idx")
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }
