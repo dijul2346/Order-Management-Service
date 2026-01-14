@@ -1,22 +1,20 @@
 package com.dijul.demo.service;
 
-import com.dijul.demo.object.Order;
-import com.dijul.demo.object.OrderID;
-import com.dijul.demo.object.OrderItem;
-import com.dijul.demo.object.OrderStatus;
+import com.dijul.demo.dto.OrderRequestDTO;
+import com.dijul.demo.dto.OrderResponseDTO;
+import com.dijul.demo.exception.ResourceNotFoundException;
+import com.dijul.demo.model.Order;
+import com.dijul.demo.model.OrderID;
+import com.dijul.demo.model.OrderItem;
+import com.dijul.demo.model.OrderStatus;
 import com.dijul.demo.repo.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.method.MethodValidationException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 @Service
 public class OrderService {
@@ -25,9 +23,14 @@ public class OrderService {
     @Autowired
     private KafkaTemplate<String, Order> kafkaTemplate;
 
-    public ResponseEntity<?> createOrder(Order order) {
+    public ResponseEntity<?> createOrder(OrderRequestDTO dto) {
+        Order order = new Order();
         order.setOrderId(UUID.randomUUID());
-        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setCustomerId(dto.getCustomerId());
+        order.setTaxRate(dto.getTaxRate());
+        if(dto.getItems() != null){
+            order.setItems(dto.getItems());
+        }
         Double total = 0.0;
         for(OrderItem item : order.getItems()) {
             total+=item.getPricePerUnit()*item.getQuantity();
@@ -37,17 +40,28 @@ public class OrderService {
         order.setTotalAmount(order.getTaxAmount()+(order.getSubtotal()));
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
         Order savedOrder =  repo.save(order);
         kafkaTemplate.send("order.created",savedOrder.getOrderId().toString(),savedOrder);
+
         return new ResponseEntity<>(savedOrder, HttpStatus.OK);
     }
 
-    public ResponseEntity<?> viewOrder(UUID orderId) {
-        Order ord= repo.findById(orderId).orElse(null);
-        if(ord==null){
-            return ResponseEntity.badRequest().body("Order ID is missing");
+    public ResponseEntity<OrderResponseDTO> viewOrder(UUID orderId) {
+        Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Order Not Found"));
+        OrderResponseDTO dto = new OrderResponseDTO();
+        if(ord != null){
+            dto.setStatus(ord.getStatus());
+            dto.setCustomerId(ord.getCustomerId());
+            dto.setOrderId(ord.getOrderId());
+            dto.setItems(ord.getItems());
+            dto.setTaxRate(ord.getTaxRate());
+            dto.setSubtotal(ord.getSubtotal());
+            dto.setTaxAmount(ord.getTaxAmount());
+            dto.setTotalAmount(ord.getTotalAmount());
+            dto.setCreatedAt(ord.getCreatedAt());
         }
-        return new ResponseEntity<>(ord, HttpStatus.OK);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     public String DeleteOrder(UUID orderId) {

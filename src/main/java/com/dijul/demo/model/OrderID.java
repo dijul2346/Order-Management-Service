@@ -1,4 +1,4 @@
-package com.dijul.demo.object;
+package com.dijul.demo.model;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

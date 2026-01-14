@@ -1,4 +1,4 @@
-package com.dijul.demo.object;
+package com.dijul.demo.model;
 
 public enum OrderStatus {
     PENDING_PAYMENT,

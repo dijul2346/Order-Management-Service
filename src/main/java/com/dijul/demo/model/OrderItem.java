@@ -1,8 +1,7 @@
-package com.dijul.demo.object;
+package com.dijul.demo.model;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import java.math.BigDecimal;
 
 @Data
 public class OrderItem {

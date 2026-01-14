@@ -1,6 +1,6 @@
 package com.dijul.demo.listener;
 
-import com.dijul.demo.object.Order;
+import com.dijul.demo.model.Order;
 import com.dijul.demo.repo.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import static com.dijul.demo.object.OrderStatus.READY_FOR_SHIPPING;
+import static com.dijul.demo.model.OrderStatus.READY_FOR_SHIPPING;
 
 @Slf4j
 @Component

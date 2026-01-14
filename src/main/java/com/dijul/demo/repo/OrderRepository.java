@@ -1,6 +1,6 @@
 package com.dijul.demo.repo;
 
-import com.dijul.demo.object.Order;
+import com.dijul.demo.model.Order;
 import org.springframework.data.aerospike.repository.AerospikeRepository;
 import org.springframework.stereotype.Repository;
 

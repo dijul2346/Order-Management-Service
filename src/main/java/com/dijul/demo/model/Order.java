@@ -1,9 +1,8 @@
-package com.dijul.demo.object;
+package com.dijul.demo.model;
 
 
 
 import com.aerospike.client.query.IndexType;
-import com.esotericsoftware.kryo.serializers.FieldSerializer;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -13,9 +12,7 @@ import lombok.Data;
 import org.springframework.data.aerospike.annotation.Indexed;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.aerospike.mapping.Document;
-import org.springframework.data.aerospike.mapping.Field;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
