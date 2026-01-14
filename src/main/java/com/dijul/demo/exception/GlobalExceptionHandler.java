@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {

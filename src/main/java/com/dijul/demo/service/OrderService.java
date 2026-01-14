@@ -70,7 +70,7 @@ public class OrderService {
             order.setStatus(OrderStatus.PAID);
             order.setUpdatedAt(LocalDateTime.now());
             repo.save(order);
-            kafkaTemplate.send("order.payed",order.getOrderId().toString(),order);
+            kafkaTemplate.send("payment.completed",order.getOrderId().toString(),order);
             return new ResponseEntity<>("Success",HttpStatus.OK) ;
         }
         else{
