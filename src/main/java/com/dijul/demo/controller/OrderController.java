@@ -3,6 +3,7 @@ package com.dijul.demo.controller;
 import com.dijul.demo.object.Order;
 import com.dijul.demo.object.OrderID;
 import com.dijul.demo.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,16 +22,14 @@ public class OrderController {
     OrderService orderService;
 
     @PostMapping("orders")
-    public ResponseEntity<Order> order(@RequestBody Order order) {
+    public ResponseEntity<?> order(@Valid @RequestBody Order order) {
         System.out.println(order);
         return orderService.createOrder(order);
     }
 
 
-
     @GetMapping("orders/{orderId}")
-    public ResponseEntity<Order> viewOrder(@PathVariable("orderId") UUID orderId) {
-
+    public ResponseEntity<?> viewOrder(@PathVariable("orderId") UUID orderId) {
         return orderService.viewOrder(orderId);
     }
 
@@ -40,7 +39,7 @@ public class OrderController {
     }
 
     @GetMapping("/customers/{customerId}/orders")
-    public ResponseEntity<Iterable<Order>> getOrder(@PathVariable("customerId") String customerId,
+    public ResponseEntity<Iterable<Order>> getOrder(@Valid @PathVariable("customerId") String customerId,
                                                 @RequestParam(defaultValue = "1") int page,
                                                 @RequestParam(defaultValue = "10") int size)
     {
@@ -49,7 +48,7 @@ public class OrderController {
     }
 
     @PostMapping("/payment")
-    private String payOrder(@RequestBody OrderID orderId) {
+    private ResponseEntity<String> payOrder(@RequestBody OrderID orderId) {
         System.out.println(orderId);
         return orderService.payOrder(orderId);
 

@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.method.MethodValidationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -23,32 +25,27 @@ public class OrderService {
     @Autowired
     private KafkaTemplate<String, Order> kafkaTemplate;
 
-    public ResponseEntity<Order> createOrder(Order order) {
-        try{
-            order.setOrderId(UUID.randomUUID());
-            order.setStatus(OrderStatus.PENDING_PAYMENT);
-            Double total = 0.0;
-            for(OrderItem item : order.getItems()) {
-                total+=item.getPricePerUnit()*item.getQuantity();
-            }
-            order.setSubtotal(total);
-            order.setTaxAmount((order.getTaxRate())*(order.getSubtotal()));
-            order.setTotalAmount(order.getTaxAmount()+(order.getSubtotal()));
-            order.setCreatedAt(LocalDateTime.now());
-            order.setUpdatedAt(LocalDateTime.now());
-            Order savedOrder =  repo.save(order);
-            kafkaTemplate.send("order.created",savedOrder.getOrderId().toString(),savedOrder);
-            return new ResponseEntity<>(savedOrder, HttpStatus.OK);
-        } catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<?> createOrder(Order order) {
+        order.setOrderId(UUID.randomUUID());
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        Double total = 0.0;
+        for(OrderItem item : order.getItems()) {
+            total+=item.getPricePerUnit()*item.getQuantity();
         }
-
+        order.setSubtotal(total);
+        order.setTaxAmount((order.getTaxRate())*(order.getSubtotal()));
+        order.setTotalAmount(order.getTaxAmount()+(order.getSubtotal()));
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        Order savedOrder =  repo.save(order);
+        kafkaTemplate.send("order.created",savedOrder.getOrderId().toString(),savedOrder);
+        return new ResponseEntity<>(savedOrder, HttpStatus.OK);
     }
 
-    public ResponseEntity<Order> viewOrder(UUID orderId) {
+    public ResponseEntity<?> viewOrder(UUID orderId) {
         Order ord= repo.findById(orderId).orElse(null);
         if(ord==null){
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return ResponseEntity.badRequest().body("Order ID is missing");
         }
         return new ResponseEntity<>(ord, HttpStatus.OK);
     }
@@ -61,26 +58,26 @@ public class OrderService {
 
     public ResponseEntity<Iterable<Order>> viewCustomerOrders(String customerId) {
         Iterable<Order> cust= repo.findByCustomerId(customerId);
-        if(!cust.iterator().hasNext()){
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
         return new ResponseEntity<>(cust, HttpStatus.OK);
     }
 
-    public String payOrder(OrderID orderId) {
+    public ResponseEntity<String> payOrder(OrderID orderId) {
         Order order = repo.findById(orderId.getOrderId()).orElse(null);
-        if(order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
+        if(order==null){
+            return new ResponseEntity<>("Invalid OrderId",HttpStatus.NOT_FOUND);
+        }
+        else if(order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
             order.setStatus(OrderStatus.PAID);
             order.setUpdatedAt(LocalDateTime.now());
             repo.save(order);
-            return "Success";
+            kafkaTemplate.send("order.payed",order.getOrderId().toString(),order);
+            return new ResponseEntity<>("Success",HttpStatus.OK) ;
         }
         else{
-            return "Already Paid";
+            return new ResponseEntity<>("Already Paid",HttpStatus.NOT_ACCEPTABLE);
         }
 
     }
-
 
 }
 
