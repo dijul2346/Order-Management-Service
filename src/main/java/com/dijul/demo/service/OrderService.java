@@ -2,12 +2,12 @@ package com.dijul.demo.service;
 
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
-import com.dijul.demo.exception.ResourceNotFoundException;
 import com.dijul.demo.model.Order;
 import com.dijul.demo.model.OrderID;
 import com.dijul.demo.model.OrderItem;
 import com.dijul.demo.model.OrderStatus;
 import com.dijul.demo.repo.OrderRepository;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +15,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 @Service
 public class OrderService {
@@ -70,8 +71,8 @@ public class OrderService {
         return "Order Deleted";
     }
 
-    public ResponseEntity<Iterable<Order>> viewCustomerOrders(String customerId) {
-        Iterable<Order> cust= repo.findByCustomerId(customerId);
+    public ResponseEntity<List<Order>> viewCustomerOrders(String customerId) {
+        List<Order> cust= repo.findByCustomerId(customerId);
         return new ResponseEntity<>(cust, HttpStatus.OK);
     }
 

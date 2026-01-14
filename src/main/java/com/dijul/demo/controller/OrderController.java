@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -40,7 +41,7 @@ public class OrderController {
 
     //Get order based on customerId
     @GetMapping("/customers/{customerId}/orders")
-    public ResponseEntity<Iterable<Order>> getOrder(@Valid @PathVariable("customerId") String customerId,
+    public ResponseEntity<List<Order>> getOrder(@Valid @PathVariable("customerId") String customerId,
                                                 @RequestParam(defaultValue = "1") int page,
                                                 @RequestParam(defaultValue = "10") int size)
     {
