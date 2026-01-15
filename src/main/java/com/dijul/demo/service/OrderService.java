@@ -2,6 +2,7 @@ package com.dijul.demo.service;
 
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
+import com.dijul.demo.dto.PaginationDTO;
 import com.dijul.demo.model.Order;
 import com.dijul.demo.model.OrderItem;
 import com.dijul.demo.model.OrderStatus;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,7 +28,6 @@ public class OrderService {
 
     @Autowired
     KafkaService kafkaService;
-
 
 
     public ResponseEntity<OrderResponseDTO> createOrder(OrderRequestDTO dto) {
@@ -49,8 +51,33 @@ public class OrderService {
         Order savedOrder =  repo.save(order);
         OrderResponseDTO ord = mapToOrderResponseDTO(savedOrder);
         kafkaService.addkakfaEvent(savedOrder,"order.created");
-        //kafkaTemplate.send("order.created",order.getOrderId().toString(),kfk);
         return new ResponseEntity<>(ord, HttpStatus.OK);
+    }
+
+
+    public ResponseEntity<OrderResponseDTO> viewOrder(UUID orderId) {
+        Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Order Not Found"));
+        OrderResponseDTO dto = mapToOrderResponseDTO(ord);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
+
+    public ResponseEntity<PaginationDTO> viewCustomerOrders(String customerId,int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+        Page<Order> cust= repo.findByCustomerId(customerId,pageable);
+        List<Order> orders=cust.getContent();
+        List<OrderResponseDTO> orderList= new ArrayList<OrderResponseDTO>();
+        for(Order order : orders){
+            orderList.add(mapToOrderResponseDTO(order));
+        }
+        PaginationDTO paginationOP= new PaginationDTO(
+                orderList,
+                cust.getTotalElements(),
+                cust.getPageable().getPageNumber(),
+                cust.getPageable().getPageSize(),
+                cust.getTotalPages()
+        );
+        return new ResponseEntity<>(paginationOP, HttpStatus.OK);
     }
 
     private OrderResponseDTO mapToOrderResponseDTO(Order order) {
@@ -60,33 +87,18 @@ public class OrderService {
                 order.getCustomerId(),
                 order.getItems(),
                 order.getSubtotal(),
-                order.getTotal(),
                 order.getTaxRate(),
                 order.getTaxAmount(),
                 order.getTotalAmount(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getUpdatedAt()
         );
-    }
-
-
-
-
-    public ResponseEntity<OrderResponseDTO> viewOrder(UUID orderId) {
-        Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Order Not Found"));
-        OrderResponseDTO dto = mapToOrderResponseDTO(ord);
-        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     public String DeleteOrder(UUID orderId) {
         Order order = repo.findById(orderId).orElse(null);
         repo.delete(order);
         return "Order Deleted";
-    }
-
-    public ResponseEntity<Page<Order>> viewCustomerOrders(String customerId,int page, int pageSize) {
-        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
-        Page<Order> cust= repo.findByCustomerId(customerId,pageable);
-        return new ResponseEntity<>(cust, HttpStatus.OK);
     }
 
 

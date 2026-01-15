@@ -1,9 +1,10 @@
 package com.dijul.demo.controller;
 
+import com.dijul.demo.dto.OrderPaymentDTO;
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
+import com.dijul.demo.dto.PaginationDTO;
 import com.dijul.demo.model.Order;
-import com.dijul.demo.model.OrderID;
 import com.dijul.demo.service.OrderService;
 import com.dijul.demo.service.PayementService;
 import jakarta.validation.Valid;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -46,17 +46,16 @@ public class OrderController {
 
     //Get order based on customerId
     @GetMapping("/customers/{customerId}/orders")
-    public ResponseEntity<Page<Order>> getOrder(@Valid @PathVariable("customerId") String customerId,
-                                                @RequestParam(defaultValue = "0") int page,
-                                                @RequestParam(defaultValue = "1") int size)
+    public ResponseEntity<PaginationDTO> getOrder(@Valid @PathVariable("customerId") String customerId,
+                                                  @RequestParam(defaultValue = "0") int page,
+                                                  @RequestParam(defaultValue = "1") int size)
     {
-        //Pageable pageable = PageRequest.of(page,size,Sort.by("createdAt").descending());
         return orderService.viewCustomerOrders(customerId,page,size);
     }
 
     //Simulating payment
     @PostMapping("/payment")
-    private ResponseEntity<String> payOrder(@RequestBody OrderID orderId) {
+    private ResponseEntity<String> payOrder(@RequestBody @Valid OrderPaymentDTO orderId) {
         System.out.println(orderId);
         return payementService.payOrder(orderId);
 

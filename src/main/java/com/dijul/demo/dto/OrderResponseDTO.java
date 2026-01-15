@@ -19,10 +19,10 @@ public class OrderResponseDTO {
     private String customerId;
     private List<OrderItem> items;
     private Double subtotal;
-    private Double total;
     private Double taxRate;
     private Double taxAmount;
     private Double totalAmount;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }
