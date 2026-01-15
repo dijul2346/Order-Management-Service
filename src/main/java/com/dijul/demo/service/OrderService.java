@@ -1,10 +1,8 @@
 package com.dijul.demo.service;
 
-import com.dijul.demo.event.OrderEvent;
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
 import com.dijul.demo.model.Order;
-import com.dijul.demo.model.OrderID;
 import com.dijul.demo.model.OrderItem;
 import com.dijul.demo.model.OrderStatus;
 import com.dijul.demo.repo.OrderRepository;
@@ -16,18 +14,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 @Service
 public class OrderService {
     @Autowired
     OrderRepository repo;
+
     @Autowired
-    private KafkaTemplate<String, OrderEvent> kafkaTemplate;
+    KafkaService kafkaService;
+
+
 
     public ResponseEntity<OrderResponseDTO> createOrder(OrderRequestDTO dto) {
         Order order = new Order();
@@ -49,7 +48,7 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         Order savedOrder =  repo.save(order);
         OrderResponseDTO ord = mapToOrderResponseDTO(savedOrder);
-        addkakfaEvent(savedOrder,"order.created");
+        kafkaService.addkakfaEvent(savedOrder,"order.created");
         //kafkaTemplate.send("order.created",order.getOrderId().toString(),kfk);
         return new ResponseEntity<>(ord, HttpStatus.OK);
     }
@@ -69,20 +68,7 @@ public class OrderService {
         );
     }
 
-    private void addkakfaEvent(Order order, String topic) {
-        Instant inst= Instant.now();
-        OrderEvent newEvent = new OrderEvent(
-                topic,
-                order.getOrderId(),
-                inst.toString(),
-                order.getCustomerId(),
-                order.getSubtotal(),
-                order.getTaxAmount(),
-                order.getTotalAmount()
-        );
-        kafkaTemplate.send(topic,order.getOrderId().toString(),newEvent);
-        //return "Success";
-    }
+
 
 
     public ResponseEntity<OrderResponseDTO> viewOrder(UUID orderId) {
@@ -103,24 +89,7 @@ public class OrderService {
         return new ResponseEntity<>(cust, HttpStatus.OK);
     }
 
-    public ResponseEntity<String> payOrder(OrderID orderId) {
-        Order order = repo.findById(orderId.getOrderId()).orElse(null);
-        if(order==null){
-            return new ResponseEntity<>("Invalid OrderId",HttpStatus.NOT_FOUND);
-        }
-        else if(order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
-            order.setStatus(OrderStatus.PAID);
-            order.setUpdatedAt(LocalDateTime.now());
-            repo.save(order);
-            addkakfaEvent(order,"payment.completed");
-            //kafkaTemplate.send("payment.completed",order.getOrderId().toString(),newEven);
-            return new ResponseEntity<>("Success",HttpStatus.OK) ;
-        }
-        else{
-            return new ResponseEntity<>("Already Paid",HttpStatus.NOT_ACCEPTABLE);
-        }
 
-    }
 
 }
 

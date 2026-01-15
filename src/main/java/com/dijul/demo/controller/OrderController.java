@@ -5,6 +5,7 @@ import com.dijul.demo.dto.OrderResponseDTO;
 import com.dijul.demo.model.Order;
 import com.dijul.demo.model.OrderID;
 import com.dijul.demo.service.OrderService;
+import com.dijul.demo.service.PayementService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,9 @@ import java.util.UUID;
 public class OrderController {
     @Autowired
     OrderService orderService;
+
+    @Autowired
+    PayementService payementService;
 
     //Create new order
     @PostMapping("orders")
@@ -54,7 +58,7 @@ public class OrderController {
     @PostMapping("/payment")
     private ResponseEntity<String> payOrder(@RequestBody OrderID orderId) {
         System.out.println(orderId);
-        return orderService.payOrder(orderId);
+        return payementService.payOrder(orderId);
 
     }
 
