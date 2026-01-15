@@ -1,6 +1,6 @@
 package com.dijul.demo.listener;
 
-import com.dijul.demo.model.Order;
+import com.dijul.demo.event.OrderEvent;
 import com.dijul.demo.repo.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +16,8 @@ public class PaymentListner {
     @Autowired
     private OrderRepository orderRepository;
 
-    @KafkaListener(topics = "payment.completed",groupId="order-management-group")
-    public void handleShipment(Order order){
+    @KafkaListener(topics = "payment.completed",groupId="order-management-group-v2")
+    public void handleShipment(OrderEvent order){
         log.info("Shipping Service: Processing Order ID: {}", order.getOrderId());
         orderRepository.findById(order.getOrderId()).ifPresentOrElse(order1 -> {
             order1.setStatus(READY_FOR_SHIPPING);
