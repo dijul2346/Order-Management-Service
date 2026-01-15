@@ -39,7 +39,7 @@ public class OrderController {
 
     //Delete order- Not specified in DOC
     @DeleteMapping("/{orderId}")
-    public  String deleteOrder(@PathVariable("orderId") UUID orderId) {
+    public  ResponseEntity<String> deleteOrder(@PathVariable("orderId") @Valid UUID orderId) {
         return orderService.DeleteOrder(orderId);
     }
 

@@ -4,6 +4,7 @@ import com.dijul.demo.event.OrderEvent;
 import com.dijul.demo.model.Order;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class KafkaService {
                 order.getOrderId(),
                 inst.toString(),
                 order.getCustomerId(),
+                MDC.get("correlationId"),
                 order.getSubtotal(),
                 order.getTaxAmount(),
                 order.getTotalAmount()

@@ -3,11 +3,11 @@ package com.dijul.demo.service;
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
 import com.dijul.demo.dto.PaginationDTO;
+import com.dijul.demo.exception.ResourceNotFoundException;
 import com.dijul.demo.model.Order;
 import com.dijul.demo.model.OrderItem;
 import com.dijul.demo.model.OrderStatus;
 import com.dijul.demo.repo.OrderRepository;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,9 +23,9 @@ import java.util.UUID;
 
 @Service
 public class OrderService {
+
     @Autowired
     OrderRepository repo;
-
     @Autowired
     KafkaService kafkaService;
 
@@ -56,7 +56,7 @@ public class OrderService {
 
 
     public ResponseEntity<OrderResponseDTO> viewOrder(UUID orderId) {
-        Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Order Not Found"));
+    Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Inavalid orderId"));
         OrderResponseDTO dto = mapToOrderResponseDTO(ord);
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
@@ -95,10 +95,11 @@ public class OrderService {
         );
     }
 
-    public String DeleteOrder(UUID orderId) {
-        Order order = repo.findById(orderId).orElse(null);
+    public ResponseEntity<String> DeleteOrder(UUID orderId) {
+        Order order = repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Invalid OrderID"));
+
         repo.delete(order);
-        return "Order Deleted";
+        return new ResponseEntity<>("Success",HttpStatus.OK);
     }
 
 

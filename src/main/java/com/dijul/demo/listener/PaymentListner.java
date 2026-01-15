@@ -18,6 +18,7 @@ public class PaymentListner {
 
     @KafkaListener(topics = "payment.completed",groupId="order-management-group-v2")
     public void handleShipment(OrderEvent order){
+        log.info("Listner started for request {}",order.getCorrelationId());
         log.info("Shipping Service: Processing Order ID: {}", order.getOrderId());
         orderRepository.findById(order.getOrderId()).ifPresentOrElse(order1 -> {
             order1.setStatus(READY_FOR_SHIPPING);
