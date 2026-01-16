@@ -1,5 +1,6 @@
 package com.dijul.demo.service;
 import com.dijul.demo.dto.OrderPaymentDTO;
+import com.dijul.demo.exception.ResourceNotFoundException;
 import com.dijul.demo.model.Order;
 import com.dijul.demo.model.OrderStatus;
 import com.dijul.demo.repo.OrderRepository;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 
 @Slf4j
 @Service
@@ -21,22 +23,20 @@ public class PayementService {
     private KafkaService kafkaService;
 
     public ResponseEntity<String> payOrder(OrderPaymentDTO orderId) {
-        Order order = repo.findById(orderId.getOrderId()).orElse(null);
-        if(order==null){
-            return new ResponseEntity<>("Invalid OrderId", HttpStatus.NOT_FOUND);
-        }
-        else if(order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
-            order.setStatus(OrderStatus.PAID);
-            order.setUpdatedAt(LocalDateTime.now());
-            repo.save(order);
-            kafkaService.addkakfaEvent(order,"payment.completed");
-
-            return new ResponseEntity<>("Success",HttpStatus.OK) ;
+        Order order = repo.findById(orderId.getOrderId()).orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
+        if(order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
+            if(kafkaService.addkakfaEvent(order,"payment.completed")){
+                log.info("Payment Success. OrderID {} Request {}",orderId,MDC.get("correlationId"));
+                return new ResponseEntity<>("Payment Completed Successfully", HttpStatus.OK);
+            }
+            else{
+                log.info("Payment failed. OrderID {} Request {}",orderId,MDC.get("correlationId"));
+                return new ResponseEntity<>("Payment Failed", HttpStatus.BAD_REQUEST);
+            }
         }
         else{
             log.info("Payment request from {}, Already paid", MDC.get("correlationId"));
             return new ResponseEntity<>("Already Paid",HttpStatus.NOT_ACCEPTABLE);
         }
-
     }
 }

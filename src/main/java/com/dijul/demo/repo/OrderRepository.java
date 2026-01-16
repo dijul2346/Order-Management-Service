@@ -11,7 +11,5 @@ import java.util.UUID;
 
 @Repository
 public interface OrderRepository extends AerospikeRepository<Order, UUID> {
-    // Spring generates the logic for this automatically!
     Page<Order> findByCustomerId(String CustomerId, Pageable pageable);
-
 }

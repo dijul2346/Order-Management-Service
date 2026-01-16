@@ -30,7 +30,7 @@ public class OrderService {
     KafkaService kafkaService;
 
 
-    public ResponseEntity<OrderResponseDTO> createOrder(OrderRequestDTO dto) {
+    public ResponseEntity<?> createOrder(OrderRequestDTO dto) {
         Order order = new Order();
         order.setOrderId(UUID.randomUUID());
         order.setCustomerId(dto.getCustomerId());
@@ -50,13 +50,18 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         Order savedOrder =  repo.save(order);
         OrderResponseDTO ord = mapToOrderResponseDTO(savedOrder);
-        kafkaService.addkakfaEvent(savedOrder,"order.created");
-        return new ResponseEntity<>(ord, HttpStatus.OK);
+        if(kafkaService.addkakfaEvent(savedOrder,"order.created")){
+            return new ResponseEntity<>(ord, HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>("Failed to create order", HttpStatus.BAD_REQUEST);
+        }
+
     }
 
 
     public ResponseEntity<OrderResponseDTO> viewOrder(UUID orderId) {
-    Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Inavalid orderId"));
+    Order ord= repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Invalid orderId"));
         OrderResponseDTO dto = mapToOrderResponseDTO(ord);
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
@@ -85,19 +90,18 @@ public class OrderService {
                 order.getOrderId(),
                 order.getStatus(),
                 order.getCustomerId(),
-                order.getItems(),
-                order.getSubtotal(),
-                order.getTaxRate(),
-                order.getTaxAmount(),
-                order.getTotalAmount(),
-                order.getCreatedAt(),
-                order.getUpdatedAt()
+//                order.getItems(),
+//                order.getSubtotal(),
+//                order.getTaxRate(),
+//                order.getTaxAmount(),
+                order.getTotalAmount()
+//                order.getCreatedAt(),
+//                order.getUpdatedAt()
         );
     }
 
     public ResponseEntity<String> DeleteOrder(UUID orderId) {
         Order order = repo.findById(orderId).orElseThrow(()->new ResourceNotFoundException("Invalid OrderID"));
-
         repo.delete(order);
         return new ResponseEntity<>("Success",HttpStatus.OK);
     }

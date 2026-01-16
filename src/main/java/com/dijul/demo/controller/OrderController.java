@@ -4,12 +4,10 @@ import com.dijul.demo.dto.OrderPaymentDTO;
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
 import com.dijul.demo.dto.PaginationDTO;
-import com.dijul.demo.model.Order;
 import com.dijul.demo.service.OrderService;
 import com.dijul.demo.service.PayementService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +24,7 @@ public class OrderController {
 
     //Create new order
     @PostMapping("orders")
-    public ResponseEntity<OrderResponseDTO> order(@Valid @RequestBody OrderRequestDTO request) {
-
+    public ResponseEntity<?> order(@Valid @RequestBody OrderRequestDTO request) {
         return orderService.createOrder(request);
     }
 

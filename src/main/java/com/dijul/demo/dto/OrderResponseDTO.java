@@ -19,12 +19,12 @@ public class OrderResponseDTO {
     private UUID orderId;
     private OrderStatus status;
     private String customerId;
-    private List<OrderItem> items;
-    private Double subtotal;
-    private Double taxRate;
-    private Double taxAmount;
+    //private List<OrderItem> items;
+//    private Double subtotal;
+//    private Double taxRate;
+//    private Double taxAmount;
     private Double totalAmount;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+//    private LocalDateTime createdAt;
+//    private LocalDateTime updatedAt;
 
 }

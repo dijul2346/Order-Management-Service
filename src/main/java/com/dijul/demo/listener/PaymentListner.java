@@ -3,6 +3,7 @@ package com.dijul.demo.listener;
 import com.dijul.demo.event.OrderEvent;
 import com.dijul.demo.repo.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.logging.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,16 @@ public class PaymentListner {
             order1.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order1);
             log.info("Order {} has been successfully SHIPPED", order1.getOrderId());
-        },() ->log.error("No Order found with orderId {}", order.getOrderId()));
+        },() ->log.error("No Order found with orderId {} request : {}", order.getOrderId(),order.getCorrelationId()));
     }
 
+    @KafkaListener(topics = "payment.failed", groupId = "order-group")
+    public void handleFailure(OrderEvent event) {
+        try {
+            MDC.put("correlationId", event.getCorrelationId());
+            log.error("Payment failed for order: {}", event.getOrderId());
+        } finally {
+            MDC.clear();
+        }
+    }
 }

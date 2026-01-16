@@ -55,7 +55,7 @@ public class OrderServicesTest {
         customerId = "cust-123";
 
         orderItem = new OrderItem();
-        orderItem.setPricePerUnit(100.0);
+        orderItem.setPricePerUnit(100);
         orderItem.setQuantity(2);
 
         List<OrderItem> items = new ArrayList<>();
@@ -81,21 +81,33 @@ public class OrderServicesTest {
 
     @Test
     void createOrder_Success() {
-        when(orderRepository.save(any(Order.class))).thenReturn(order);
-        doNothing().when(kafkaService).addkakfaEvent(any(Order.class), anyString());
-
-        ResponseEntity<OrderResponseDTO> response = orderService.createOrder(orderRequestDTO);
+        when(orderRepository.save(any(Order.class))).thenAnswer(i-> i.getArgument(0));
+        when(kafkaService.addkakfaEvent(any(Order.class), eq("order.created"))).thenReturn(true);
+        ResponseEntity<?> response = orderService.createOrder(orderRequestDTO);
 
         assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(customerId, response.getBody().getCustomerId());
+        assertTrue(response.getBody() instanceof OrderResponseDTO);
+
+        OrderResponseDTO resultDto = (OrderResponseDTO) response.getBody();
+        assertNotNull(resultDto.getOrderId());
+
         // 200 + 20 = 220
-        assertEquals(220.0, response.getBody().getTotalAmount());
+        assertEquals(220.0,resultDto.getTotalAmount());
 
         verify(orderRepository, times(1)).save(any(Order.class));
         verify(kafkaService, times(1)).addkakfaEvent(any(Order.class), eq("order.created"));
     }
+
+    @Test
+    void createOrder_fail() {
+        when(orderRepository.save(any(Order.class))).thenAnswer(i->i.getArgument(0));
+        when(kafkaService.addkakfaEvent(any(Order.class),eq("order.created"))).thenReturn(false);
+        ResponseEntity<?> response = orderService.createOrder(orderRequestDTO);
+
+        assertEquals(HttpStatus.BAD_REQUEST,response.getStatusCode());
+        assertEquals("Failed to create order",response.getBody());
+    }
+
 
     @Test
     void viewOrder_Success() {
@@ -122,19 +134,17 @@ public class OrderServicesTest {
     @Test
     void viewCustomerOrders_Success() {
         List<Order> orders = new ArrayList<>();
+        Pageable pageableRequest = PageRequest.of(0, 10);
         orders.add(order);
-        Page<Order> pageOrders = new PageImpl<>(orders);
+        Page<Order> pageOrders = new PageImpl<>(orders,pageableRequest,orders.size());
 
-        // Matcher for Pageable could be tricky, simplifying to any() for robustness
+
         when(orderRepository.findByCustomerId(eq(customerId), any(Pageable.class))).thenReturn(pageOrders);
 
         ResponseEntity<PaginationDTO> response = orderService.viewCustomerOrders(customerId, 0, 10);
 
         assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        // Assuming PaginationDTO has a method to get total elements or we check
-        // specific fields
-        // Since we don't see PaginationDTO definition, we assume basic checks
+        assertEquals(HttpStatus.OK,response.getStatusCode());
         assertNotNull(response.getBody());
 
         verify(orderRepository, times(1)).findByCustomerId(eq(customerId), any(Pageable.class));
