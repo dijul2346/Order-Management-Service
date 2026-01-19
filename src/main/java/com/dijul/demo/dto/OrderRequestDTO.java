@@ -15,6 +15,6 @@ public class OrderRequestDTO {
 
     @NotEmpty(message = "Order List Should not be empty")
     @Valid
-    private List<OrderItem> Items;
+    private List<OrderItemDTO> Items;
     private Double taxRate;
 }

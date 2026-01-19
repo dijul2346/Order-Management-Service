@@ -30,13 +30,22 @@ public class OrderService {
     KafkaService kafkaService;
 
 
-    public ResponseEntity<?> createOrder(OrderRequestDTO dto) {
+    public ResponseEntity<OrderResponseDTO> createOrder(OrderRequestDTO dto) {
         Order order = new Order();
         order.setOrderId(UUID.randomUUID());
         order.setCustomerId(dto.getCustomerId());
         order.setTaxRate(dto.getTaxRate());
+        List<OrderItem> items = dto.getItems().stream().map(
+                orderItemDTO -> {
+                    OrderItem item = new OrderItem();
+                    item.setProductId(orderItemDTO.getProductId());
+                    item.setQuantity(orderItemDTO.getQuantity());
+                    item.setPricePerUnit(orderItemDTO.getPricePerUnit());
+                    return item;
+                }
+        ).toList();
         if(dto.getItems() != null){
-            order.setItems(dto.getItems());
+            order.setItems(items);
         }
         Double total = 0.0;
         for(OrderItem item : order.getItems()) {
@@ -51,12 +60,11 @@ public class OrderService {
         Order savedOrder =  repo.save(order);
         OrderResponseDTO ord = mapToOrderResponseDTO(savedOrder);
         if(kafkaService.addkakfaEvent(savedOrder,"order.created")){
-            return new ResponseEntity<>(ord, HttpStatus.OK);
+            return new ResponseEntity<>(ord, HttpStatus.CREATED);
         }
         else{
-            return new ResponseEntity<>("Failed to create order", HttpStatus.BAD_REQUEST);
+            throw new ResourceNotFoundException("Could not create order");
         }
-
     }
 
 

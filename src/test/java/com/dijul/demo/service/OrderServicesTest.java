@@ -1,5 +1,6 @@
 package com.dijul.demo.service;
 
+import com.dijul.demo.dto.OrderItemDTO;
 import com.dijul.demo.dto.OrderRequestDTO;
 import com.dijul.demo.dto.OrderResponseDTO;
 import com.dijul.demo.dto.PaginationDTO;
@@ -54,12 +55,23 @@ public class OrderServicesTest {
         orderId = UUID.randomUUID();
         customerId = "cust-123";
 
-        orderItem = new OrderItem();
-        orderItem.setPricePerUnit(100);
-        orderItem.setQuantity(2);
+        OrderItemDTO item = new OrderItemDTO();
+        item.setQuantity(2);
+        item.setPricePerUnit(100);
+        item.setProductId("prod-X");
 
-        List<OrderItem> items = new ArrayList<>();
-        items.add(orderItem);
+        List<OrderItemDTO> items= new ArrayList<>();
+        items.add(item);
+
+        List<OrderItem> orderItem = items.stream().map(
+                orderItemDTO -> {
+                    OrderItem item1 = new OrderItem();
+                    item1.setProductId(orderItemDTO.getProductId());
+                    item1.setQuantity(orderItemDTO.getQuantity());
+                    item1.setPricePerUnit(orderItemDTO.getPricePerUnit());
+                    return item1;
+                }
+        ).toList();
 
         orderRequestDTO = new OrderRequestDTO();
         orderRequestDTO.setCustomerId(customerId);
@@ -70,7 +82,7 @@ public class OrderServicesTest {
         order.setOrderId(orderId);
         order.setCustomerId(customerId);
         order.setTaxRate(0.1);
-        order.setItems(items);
+        order.setItems(orderItem);
         order.setSubtotal(200.0);
         order.setTaxAmount(20.0);
         order.setTotalAmount(220.0);
@@ -99,14 +111,20 @@ public class OrderServicesTest {
     }
 
     @Test
-    void createOrder_fail() {
-        when(orderRepository.save(any(Order.class))).thenAnswer(i->i.getArgument(0));
-        when(kafkaService.addkakfaEvent(any(Order.class),eq("order.created"))).thenReturn(false);
-        ResponseEntity<?> response = orderService.createOrder(orderRequestDTO);
+    void createOrder_Fail() throws ResourceNotFoundException {
+        when(orderRepository.save(any(Order.class))).thenAnswer(i-> i.getArgument(0));
+        when(kafkaService.addkakfaEvent(any(Order.class), eq("order.created"))).thenReturn(false);
 
-        assertEquals(HttpStatus.BAD_REQUEST,response.getStatusCode());
-        assertEquals("Failed to create order",response.getBody());
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> orderService.createOrder(orderRequestDTO));
+
+        assertEquals("Could not create order", exception.getMessage());
+        verify(orderRepository, times(1)).save(any(Order.class));
+        verify(kafkaService, times(1)).addkakfaEvent(any(Order.class), eq("order.created"));
+
     }
+
+
 
 
     @Test

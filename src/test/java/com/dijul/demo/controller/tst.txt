@@ -1,0 +1,120 @@
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(OrderController.class)
+class OrderControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private OrderService orderService;
+
+    @MockBean
+    private PayementService payementService;
+
+    private OrderRequestDTO orderRequestDTO;
+    private OrderResponseDTO orderResponseDTO;
+    private UUID orderId;
+    private String customerId;
+
+    @BeforeEach
+    void setUp() {
+        orderId = UUID.randomUUID();
+        customerId = "CUST-123";
+
+        OrderItem item = new OrderItem();
+        item.setPricePerUnit(10.0);
+        item.setQuantity(2);
+
+        List<OrderItem> items = new ArrayList<>();
+        items.add(item);
+
+        orderRequestDTO = new OrderRequestDTO();
+        orderRequestDTO.setCustomerId(customerId);
+        orderRequestDTO.setItems(items);
+        orderRequestDTO.setTaxRate(0.1);
+
+        orderResponseDTO = new OrderResponseDTO();
+        orderResponseDTO.setOrderId(orderId);
+        orderResponseDTO.setCustomerId(customerId);
+        orderResponseDTO.setItems(items);
+        orderResponseDTO.setSubtotal(20.0);
+        orderResponseDTO.setTaxRate(0.1);
+        orderResponseDTO.setTaxAmount(2.0);
+        orderResponseDTO.setTotalAmount(22.0);
+        orderResponseDTO.setCreatedAt(LocalDateTime.now());
+        orderResponseDTO.setUpdatedAt(LocalDateTime.now());
+    }
+
+    @Test
+    void createOrder_Success() throws Exception {
+        when(orderService.createOrder(any(OrderRequestDTO.class)))
+                .thenReturn(new ResponseEntity<>(orderResponseDTO, HttpStatus.OK));
+
+        mockMvc.perform(post("/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(orderRequestDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.customerId").value(customerId))
+                .andExpect(jsonPath("$.orderId").value(orderId.toString()))
+                .andExpect(jsonPath("$.totalAmount").value(22.0));
+    }
+
+    @Test
+    void viewOrder_Success() throws Exception {
+        when(orderService.viewOrder(orderId))
+                .thenReturn(new ResponseEntity<>(orderResponseDTO, HttpStatus.OK));
+
+        mockMvc.perform(get("/orders/{orderId}", orderId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderId").value(orderId.toString()))
+                .andExpect(jsonPath("$.customerId").value(customerId));
+    }
+
+    @Test
+    void deleteOrder_Success() throws Exception {
+        when(orderService.DeleteOrder(orderId))
+                .thenReturn(new ResponseEntity<>("Success", HttpStatus.OK));
+
+        mockMvc.perform(delete("/{orderId}", orderId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value("Success"));
+    }
+
+    @Test
+    void getOrder_Success() throws Exception {
+        PaginationDTO paginationDTO = new PaginationDTO(
+                Collections.singletonList(orderResponseDTO),
+                1L,
+                0,
+                10,
+                1);
+
+        when(orderService.viewCustomerOrders(anyString(), anyInt(), anyInt()))
+                .thenReturn(new ResponseEntity<>(paginationDTO, HttpStatus.OK));
+
+        mockMvc.perform(get("/customers/{customerId}/orders", customerId)
+                .param("page", "0")
+                .param("size", "10")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderList[0].customerId").value(customerId));
+    }
+}
