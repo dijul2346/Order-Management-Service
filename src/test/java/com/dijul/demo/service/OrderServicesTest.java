@@ -94,8 +94,8 @@ public class OrderServicesTest {
     @Test
     void createOrder_Success() {
         when(orderRepository.save(any(Order.class))).thenAnswer(i-> i.getArgument(0));
-        when(kafkaService.addkakfaEvent(any(Order.class), eq("order.created"))).thenReturn(true);
-        ResponseEntity<?> response = orderService.createOrder(orderRequestDTO);
+        when(kafkaService.addkakfaEvent(any(Order.class), eq("order.created"),anyBoolean())).thenReturn(true);
+        ResponseEntity<?> response = orderService.createOrder(orderRequestDTO,anyBoolean());
 
         assertNotNull(response);
         assertTrue(response.getBody() instanceof OrderResponseDTO);
@@ -107,20 +107,20 @@ public class OrderServicesTest {
         assertEquals(220.0,resultDto.getTotalAmount());
 
         verify(orderRepository, times(1)).save(any(Order.class));
-        verify(kafkaService, times(1)).addkakfaEvent(any(Order.class), eq("order.created"));
+        verify(kafkaService, times(1)).addkakfaEvent(any(Order.class), eq("order.created"),anyBoolean());
     }
 
     @Test
     void createOrder_Fail() throws ResourceNotFoundException {
         when(orderRepository.save(any(Order.class))).thenAnswer(i-> i.getArgument(0));
-        when(kafkaService.addkakfaEvent(any(Order.class), eq("order.created"))).thenReturn(false);
+        when(kafkaService.addkakfaEvent(any(Order.class), eq("order.created"),anyBoolean())).thenReturn(false);
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> orderService.createOrder(orderRequestDTO));
+                () -> orderService.createOrder(orderRequestDTO,Boolean.FALSE));
 
         assertEquals("Could not create order", exception.getMessage());
         verify(orderRepository, times(1)).save(any(Order.class));
-        verify(kafkaService, times(1)).addkakfaEvent(any(Order.class), eq("order.created"));
+        verify(kafkaService, times(1)).addkakfaEvent(any(Order.class), eq("order.created"),anyBoolean());
 
     }
 
@@ -128,16 +128,13 @@ public class OrderServicesTest {
 
 
     @Test
-    void viewOrder_Success() {
+    void viewOrder(){
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-
         ResponseEntity<OrderResponseDTO> response = orderService.viewOrder(orderId);
-
         assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(orderId, response.getBody().getOrderId());
-
-        verify(orderRepository, times(1)).findById(orderId);
+        assertEquals(response.getBody().getCustomerId(), customerId);
+        assertEquals(response.getBody().getOrderId(),orderId);
+        verify(orderRepository,times(1)).findById(orderId);
     }
 
     @Test

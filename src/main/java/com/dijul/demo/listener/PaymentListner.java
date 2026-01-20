@@ -29,13 +29,9 @@ public class PaymentListner {
         },() ->log.error("No Order found with orderId {} request : {}", order.getOrderId(),order.getCorrelationId()));
     }
 
-    @KafkaListener(topics = "payment.failed", groupId = "order-group")
+    @KafkaListener(topics = {"payment.failed","order.failed"}, groupId = "order-group")
     public void handleFailure(OrderEvent event) {
-        try {
-            MDC.put("correlationId", event.getCorrelationId());
-            log.error("Payment failed for order: {}", event.getOrderId());
-        } finally {
-            MDC.clear();
-        }
+            log.error("{} for order: {} request: {}", event.getEventType(),event.getOrderId(),event.getCorrelationId());
     }
+
 }

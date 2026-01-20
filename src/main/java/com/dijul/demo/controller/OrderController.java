@@ -24,8 +24,9 @@ public class OrderController {
 
     //Create new order
     @PostMapping("orders")
-    public ResponseEntity<?> order(@Valid @RequestBody OrderRequestDTO request) {
-        return orderService.createOrder(request);
+    public ResponseEntity<?> order(@Valid @RequestBody OrderRequestDTO request,
+                                   @RequestParam(defaultValue ="true") boolean isSuccess) {
+        return orderService.createOrder(request,isSuccess);
     }
 
     //Get order with orderID
@@ -52,9 +53,10 @@ public class OrderController {
 
     //Simulating payment
     @PostMapping("/payment")
-    private ResponseEntity<String> payOrder(@RequestBody @Valid OrderPaymentDTO orderId) {
+    private ResponseEntity<String> payOrder(@RequestBody @Valid OrderPaymentDTO orderId,
+                                            @RequestParam(defaultValue ="true") boolean isSuccess) {
         System.out.println(orderId);
-        return payementService.payOrder(orderId);
+        return payementService.payOrder(orderId,isSuccess);
 
     }
 

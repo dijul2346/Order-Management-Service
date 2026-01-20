@@ -26,8 +26,7 @@ public class KafkaService {
     Random random = new Random();
     Instant inst= Instant.now();
 
-    public Boolean addkakfaEvent(Order order, String topic) {
-        boolean isSuccess = random.nextBoolean();
+    public Boolean addkakfaEvent(Order order, String topic, Boolean isSuccess) {
         String finalTopic = topic;
         if (!isSuccess) {
             finalTopic = topic.equals("payment.completed") ? "payment.failed" : "order.failed";

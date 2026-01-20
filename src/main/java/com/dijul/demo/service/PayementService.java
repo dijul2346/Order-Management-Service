@@ -22,10 +22,10 @@ public class PayementService {
     @Autowired
     private KafkaService kafkaService;
 
-    public ResponseEntity<String> payOrder(OrderPaymentDTO orderId) {
+    public ResponseEntity<String> payOrder(OrderPaymentDTO orderId,boolean isSuccess) {
         Order order = repo.findById(orderId.getOrderId()).orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
         if(order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
-            if(kafkaService.addkakfaEvent(order,"payment.completed")){
+            if(kafkaService.addkakfaEvent(order,"payment.completed",isSuccess)){
                 log.info("Payment Success. OrderID {} Request {}",orderId,MDC.get("correlationId"));
                 return new ResponseEntity<>("Payment Completed Successfully", HttpStatus.OK);
             }

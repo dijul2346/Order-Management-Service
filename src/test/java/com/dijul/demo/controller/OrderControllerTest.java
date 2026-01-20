@@ -82,7 +82,7 @@ class OrderControllerTest {
 
     @Test
     void createOrder() throws Exception {
-        when(orderService.createOrder(orderRequestDTO))
+        when(orderService.createOrder(orderRequestDTO,Boolean.TRUE))
                 .thenReturn(ResponseEntity.ok(orderResponseDTO));
 
         mockMvc.perform(post("/orders")
@@ -96,7 +96,7 @@ class OrderControllerTest {
 
     @Test
     void createOrder_Fail() throws Exception {
-        when(orderService.createOrder(orderRequestDTO))
+        when(orderService.createOrder(orderRequestDTO,Boolean.FALSE))
                 .thenThrow(new ResourceNotFoundException("Could not create order"));
 
         mockMvc.perform(post("/orders")
@@ -163,7 +163,5 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value("Success"));
     }
-
-
 
 }
