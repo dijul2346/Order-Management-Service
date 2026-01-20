@@ -6,6 +6,9 @@ import com.dijul.demo.dto.OrderResponseDTO;
 import com.dijul.demo.dto.PaginationDTO;
 import com.dijul.demo.service.OrderService;
 import com.dijul.demo.service.PayementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/")
+@Tag(name="orderController", description = "Controller for all order related calls")
 public class OrderController {
     @Autowired
     OrderService orderService;
@@ -23,6 +27,8 @@ public class OrderController {
     PayementService payementService;
 
     //Create new order
+    @Operation(summary = "Create an Order",description = "Pass the orderRequestDTO to create a new order. Default taxrate 10%. Use 0.10 for 10%")
+    @ApiResponse(responseCode = "201",description = "Order created successfully")
     @PostMapping("orders")
     public ResponseEntity<?> order(@Valid @RequestBody OrderRequestDTO request,
                                    @RequestParam(defaultValue ="true") boolean isSuccess) {
@@ -30,6 +36,7 @@ public class OrderController {
     }
 
     //Get order with orderID
+    @Operation(summary = "Order Details", description = "Get order details for an orderID")
     @GetMapping("orders/{orderId}")
     public ResponseEntity<OrderResponseDTO> viewOrder(@PathVariable("orderId") UUID orderId) {
         return orderService.viewOrder(orderId);
@@ -43,6 +50,7 @@ public class OrderController {
 
 
     //Get order based on customerId
+    @Operation(summary = "View a Customers Orders",description = "View all orders made by the customer.")
     @GetMapping("/customers/{customerId}/orders")
     public ResponseEntity<PaginationDTO> getOrder(@Valid @PathVariable("customerId") String customerId,
                                                   @RequestParam(defaultValue = "0") int page,
@@ -51,13 +59,5 @@ public class OrderController {
         return orderService.viewCustomerOrders(customerId,page,size);
     }
 
-    //Simulating payment
-    @PostMapping("/payment")
-    private ResponseEntity<String> payOrder(@RequestBody @Valid OrderPaymentDTO orderId,
-                                            @RequestParam(defaultValue ="true") boolean isSuccess) {
-        System.out.println(orderId);
-        return payementService.payOrder(orderId,isSuccess);
-
-    }
 
 }

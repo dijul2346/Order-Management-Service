@@ -101,7 +101,8 @@ class OrderControllerTest {
 
         mockMvc.perform(post("/orders")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(orderRequestDTO)))
+                .content(objectMapper.writeValueAsString(orderRequestDTO))
+                        .param("isSuccess","false"))
                 .andExpect(status().isNotFound())
                 .andExpect(result -> assertTrue(result.getResolvedException()instanceof ResourceNotFoundException))
                 .andExpect(content().string((containsString("Could not create order"))));

@@ -1,20 +1,12 @@
 @Test
 void payOrder_Success() {
     // Arrange
-    UUID orderIdUuid = UUID.randomUUID();
-    OrderPaymentDTO paymentDto = new OrderPaymentDTO(orderIdUuid);
-
-    Order mockOrder = new Order();
-    mockOrder.setOrderId(orderIdUuid);
-    mockOrder.setStatus(OrderStatus.PENDING_PAYMENT);
-
-    when(repo.findById(orderIdUuid)).thenReturn(Optional.of(mockOrder));
-    // Use matchers for all arguments to avoid the InvalidUseOfMatchersException
-    when(kafkaService.addkakfaEvent(any(Order.class), eq("payment.completed"), anyBoolean()))
-            .thenReturn(true);
+    when(repo.findById(orderId)).thenReturn(Optional.of(mockOrder));
+    when(kafkaService.addkakfaEvent(any(Order.class), eq("payment.completed"), eq(true)))
+        .thenReturn(true);
 
     // Act
-    ResponseEntity<String> response = orderService.payOrder(paymentDto, true);
+    ResponseEntity<String> response = paymentService.payOrder(paymentDTO, true);
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
